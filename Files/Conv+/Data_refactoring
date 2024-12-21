@@ -1,0 +1,89 @@
+import numpy as np
+import os
+from collections import defaultdict
+
+# Directory containing the .npz files
+directory = '/home/ubuntu/fire/data/train'
+
+# Step 1: List all .npz files
+npz_files = [f for f in os.listdir(directory) if f.endswith('.npz')]
+
+# Step 2: Group files by fire_ID
+files_by_fire_id = defaultdict(list)
+for file_name in npz_files:
+    # Assuming file format is 'compressed_(fireID)_(day).npz'
+    parts = file_name.split('_')
+    fire_id = parts[1]
+    files_by_fire_id[fire_id].append(file_name)
+
+def extract_day(file_name):
+    # Assuming file format is 'compressed_(fireID)_(day).npz'
+    return int(file_name.split('_')[2].split('.')[0])
+
+# Sort each key list by the day number in ascending order
+print(len( files_by_fire_id.keys()))
+
+for index, k in enumerate(files_by_fire_id.keys()):
+   
+    files = files_by_fire_id[k]
+    files.sort(key=extract_day)
+    for i in range(2, len(files)):
+        day1 = files[i-2]
+        day2 = files[i-1]
+        day3 = files[i]
+        #print(f"Day 1: {day1}, Day 2: {day2}, Day 3: {day3}")
+        day1_data = np.load(os.path.join(directory, day1))
+        day2_data = np.load(os.path.join(directory, day2))
+        day3_data = np.load(os.path.join(directory, day3))
+        
+      
+        dob1 = day1_data['inputs'][1]
+
+        dob2 = day2_data['inputs'][1]
+ 
+        dob3 = day3_data['inputs'][1]
+      
+        
+        wind_u1 = day1_data['inputs'][2]
+        wind_v1 = day1_data['inputs'][3]
+       
+        
+        
+        wind_u2 = day2_data['inputs'][2]
+    
+        wind_v2 = day2_data['inputs'][3]
+        
+        wind_u3 = day3_data['inputs'][2]
+        
+        wind_v3 = day3_data['inputs'][3]
+        
+        precip = day3_data['inputs'][4]
+        cover = day3_data['inputs'][5]
+        
+        post_dob = day3_data['output']
+        
+        if not (dob1.shape == dob2.shape == dob3.shape == wind_u1.shape == wind_v1.shape == wind_u2.shape == wind_v2.shape == wind_u3.shape == wind_v3.shape == precip.shape == cover.shape == post_dob.shape):
+            print(dob1.shape)
+            print(dob2.shape)
+            print(dob3.shape)
+            print(wind_u1.shape)
+            print(wind_v1.shape)
+            print(wind_u2.shape)    
+            print(wind_v2.shape)
+            print(wind_u3.shape)
+            print(wind_v3.shape)
+            print(precip.shape)
+            print(cover.shape)
+            print(post_dob.shape)
+            print('didnt save')
+        else:   
+            data = np.stack([dob1, dob2, dob3, wind_u1, wind_v1, wind_u2, wind_v2, wind_u3, wind_v3, precip, cover, post_dob], axis=0)
+            #print(data.shape)
+            f_name = f'{k}_{extract_day(day3)}.npz'
+            np.savez(f'/home/ubuntu/fire/data/train_3/{f_name}', data)
+            print(f'saved as {f_name}')
+            print(f'{index/len(files_by_fire_id.keys())*100}%')  
+        
+      
+        
+        
